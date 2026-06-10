@@ -21,6 +21,7 @@ yarn-error.log
 firebase-debug.log
 
 # LGD raw data (regenerate via scripts/transform_lgd.js)
+raw/
 scripts/lgd_raw/
 scripts/lgd_csv/
 
