@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Builds / outputs
+dist/
+dist-check/
+lib/
+.expo/
+web-build/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*serviceAccountKey*.json
+
+# Logs / caches
+npm-debug.log*
+yarn-error.log
+.firebase/
+firebase-debug.log
+
+# LGD raw data (regenerate via scripts/transform_lgd.js)
+scripts/lgd_raw/
+scripts/lgd_csv/
+
+# OS / editor
+.DS_Store
+Thumbs.db

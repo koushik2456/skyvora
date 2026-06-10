@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-06-10T18:02:24.863083+00:00",
+  "source": "Local Government Directory (LGD), Government of India - https://lgdirectory.gov.in",
+  "source_files": {
+    "states": "states.10Jun2026.csv",
+    "districts": "districts.10Jun2026.csv",
+    "subdistricts": "subdistricts.10Jun2026.csv",
+    "villages": "villages.10Jun2026.csv"
+  },
+  "target_states": {
+    "36": "Telangana",
+    "28": "Andhra Pradesh"
+  },
+  "per_state": {
+    "Andhra Pradesh": {
+      "districts": 28,
+      "mandals": 688,
+      "villages": 17957
+    },
+    "Telangana": {
+      "districts": 33,
+      "mandals": 621,
+      "villages": 11308
+    }
+  },
+  "totals": {
+    "states": 2,
+    "districts": 61,
+    "mandals": 1309,
+    "villages": 29265
+  },
+  "duplicate_records_removed": {
+    "districts": 0,
+    "mandals": 0,
+    "villages_global_duplicate_code": 0,
+    "villages_duplicate_within_mandal": 0
+  },
+  "missing_mappings": {
+    "orphan_mandals_no_parent_district": 0,
+    "orphan_villages_no_parent_subdistrict": 0
+  },
+  "inactive_records_skipped": {
+    "note": "LGD master downloads contain only active administrative units; merged/dissolved entities are already excluded at source.",
+    "villages": 0
+  },
+  "malformed_rows_skipped": {
+    "districts": 0,
+    "mandals": 0,
+    "villages": 0
+  },
+  "validation_passed": true,
+  "validation_errors": []
+}
