@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,6 +8,7 @@ import BookingNavigator from './BookingNavigator';
 import BookingDetailScreen from '@/screens/booking/BookingDetailScreen';
 import ReportDetailScreen from '@/screens/reports/ReportDetailScreen';
 import { useAuthStore } from '@/store/authStore';
+import { useLanguageStore } from '@/store/languageStore';
 import { Colors } from '@/constants/theme';
 import type { RootStackParamList } from './types';
 
@@ -20,10 +21,30 @@ const navTheme = {
 
 export default function RootNavigator() {
   const user = useAuthStore((s) => s.user);
-  const isHydrated = useAuthStore((s) => s.isHydrated);
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist.hasHydrated());
 
-  // Wait for the persisted session to restore so signed-in users skip auth entirely
-  if (!isHydrated) {
+  useEffect(() => {
+    if (useAuthStore.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    // Never block the UI if storage rehydration stalls (seen on some web loads)
+    const fallback = setTimeout(() => setHydrated(true), 1500);
+    return () => {
+      unsub();
+      clearTimeout(fallback);
+    };
+  }, []);
+
+  // Keep app language in sync when a logged-in user has a saved preference.
+  useEffect(() => {
+    if (user?.language) {
+      useLanguageStore.getState().setLanguage(user.language);
+    }
+  }, [user?.language]);
+
+  if (!hydrated) {
     return (
       <View
         style={{

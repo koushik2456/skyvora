@@ -5,6 +5,7 @@ import { MotiView } from '@/components/ui/Motion';
 import { Check } from 'lucide-react-native';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { TIME_SLOTS } from '@/constants/services';
+import { useTranslation } from '@/hooks/useTranslation';
 import { today, maxBookingDate } from '@/utils/date';
 import type { TimeSlot } from '@/types';
 
@@ -25,11 +26,13 @@ export default function DateStep({
   onSlot,
   onInstructions,
 }: Props) {
+  const { t, tTimeSlot } = useTranslation();
+
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Schedule</Text>
+      <Text style={styles.title}>{t('scheduleTitle')}</Text>
 
-      <Text style={styles.section}>Preferred Date</Text>
+      <Text style={styles.section}>{t('lblPreferredDate')}</Text>
       <View style={styles.calendarCard}>
         <Calendar
           minDate={today()}
@@ -51,11 +54,12 @@ export default function DateStep({
           }}
         />
       </View>
-      <Text style={styles.note}>Bookable up to 30 days ahead · Sundays unavailable.</Text>
+      <Text style={styles.note}>{t('calendarNote')}</Text>
 
-      <Text style={styles.section}>Time Slot</Text>
+      <Text style={styles.section}>{t('lblTimeSlot')}</Text>
       {TIME_SLOTS.map((s) => {
         const active = slot === s.value;
+        const { label, sub } = tTimeSlot(s.value);
         return (
           <Pressable key={s.value} onPress={() => onSlot(s.value)}>
             <MotiView
@@ -63,8 +67,8 @@ export default function DateStep({
               style={styles.slotRow}
             >
               <View>
-                <Text style={[styles.slotLabel, active && styles.slotLabelActive]}>{s.label}</Text>
-                <Text style={styles.slotSub}>{s.sub}</Text>
+                <Text style={[styles.slotLabel, active && styles.slotLabelActive]}>{label}</Text>
+                <Text style={styles.slotSub}>{sub}</Text>
               </View>
               <View style={[styles.radio, active && styles.radioActive]}>
                 {active ? <Check size={14} color={Colors.white} strokeWidth={3} /> : null}
@@ -73,13 +77,13 @@ export default function DateStep({
           </Pressable>
         );
       })}
-      <Text style={styles.note}>Actual time will be confirmed by our team.</Text>
+      <Text style={styles.note}>{t('slotConfirmNote')}</Text>
 
-      <Text style={styles.section}>Special Instructions (optional)</Text>
+      <Text style={styles.section}>{t('lblSpecialInstructions')}</Text>
       <TextInput
         value={instructions}
-        onChangeText={(t) => onInstructions(t.slice(0, 300))}
-        placeholder="Any notes for our team..."
+        onChangeText={(text) => onInstructions(text.slice(0, 300))}
+        placeholder={t('phSpecialInstructions')}
         placeholderTextColor={Colors.textMuted}
         multiline
         style={styles.textArea}
@@ -90,7 +94,14 @@ export default function DateStep({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.sm },
+  wrap: {
+    gap: Spacing.sm,
+    backgroundColor: Colors.sectionBg,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   title: { fontFamily: Typography.fontDisplay, fontSize: Typography.sizes.xl, color: Colors.textPrimary },
   section: { fontFamily: Typography.fontBodySemi, fontSize: Typography.sizes.sm, color: Colors.textSecondary, marginTop: Spacing.base },
   calendarCard: {

@@ -8,7 +8,7 @@ interface Props {
 }
 
 /** Minimal quad-rotor drone mark used across the Skyvora brand. */
-export default function DroneLogo({ size = 96, color = '#FFFFFF', accent = '#F5A623' }: Props) {
+export default function DroneLogo({ size = 96, color = '#DAF1DE', accent = '#8EB69B' }: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
       {/* arms */}

@@ -1,0 +1,11 @@
+{
+  "name": "skyvora",
+  "private": true,
+  "scripts": {
+    "start": "npm start --prefix apps/mobile",
+    "start:tunnel": "npm run start:tunnel --prefix apps/mobile",
+    "start:usb": "npm run start:usb --prefix apps/mobile",
+    "web": "npm run web --prefix apps/mobile",
+    "mobile": "npm start --prefix apps/mobile"
+  }
+}

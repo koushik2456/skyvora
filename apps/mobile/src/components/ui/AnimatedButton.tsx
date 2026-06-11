@@ -16,7 +16,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Motion, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
+import { Colors, Motion, Radius, Shadow, Spacing, Typography, resolveShadow } from '@/constants/theme';
 
 type Variant = 'primary' | 'accent' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'md' | 'lg';
@@ -102,8 +102,8 @@ export default function AnimatedButton({
     if (variant === 'primary' || variant === 'accent') {
       const grad: [string, string] =
         variant === 'primary'
-          ? [Colors.primaryDark, Colors.primaryLight]
-          : [Colors.accent, Colors.accentLight];
+          ? [Colors.bgForest, Colors.jade]
+          : [Colors.jade, Colors.sage];
       return (
         <LinearGradient
           colors={grad}
@@ -163,7 +163,11 @@ export default function AnimatedButton({
   };
 
   const glow =
-    variant === 'primary' ? Shadow.glow : variant === 'accent' ? Shadow.accentGlow : undefined;
+    variant === 'primary'
+      ? resolveShadow(Shadow.glow)
+      : variant === 'accent'
+        ? resolveShadow(Shadow.accentGlow)
+        : undefined;
 
   return (
     <Animated.View style={[pressStyle, !disabled && glow, style, disabled && styles.disabled]}>

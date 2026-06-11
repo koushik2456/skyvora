@@ -1,20 +1,21 @@
 import React from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ImageBackground, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Phone, Download, MessageCircle } from 'lucide-react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Header from '@/components/common/Header';
-import ServiceIcon from '@/components/ui/ServiceIcon';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Timeline from '@/components/ui/Timeline';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { getServiceById, TIME_SLOTS } from '@/constants/services';
+import { getServiceById, SERVICE_IMAGES } from '@/constants/services';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useBookingsRepo } from '@/store/bookingsRepo';
 import { formatINR } from '@/utils/pricing';
 import { formatDateLong } from '@/utils/date';
-import type { BookingStatus } from '@/types';
+import type { BookingStatus, TimeSlot } from '@/types';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -28,15 +29,8 @@ const TIMELINE_ORDER: BookingStatus[] = [
   'COMPLETED',
 ];
 
-const TIMELINE_LABELS: Record<string, string> = {
-  PENDING_PAYMENT: 'Booking Placed',
-  PAYMENT_CONFIRMED: 'Payment Confirmed',
-  ASSIGNED: 'Team Assigned',
-  IN_PROGRESS: 'Service In Progress',
-  COMPLETED: 'Completed',
-};
-
 export default function BookingDetailScreen() {
+  const { t, tService, tCrop, tAreaUnit, tTimeSlot, tTimeline, tPaymentStatus } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Rt>();
   const booking = useBookingsRepo((s) => s.getById(params.bookingId));
@@ -45,93 +39,122 @@ export default function BookingDetailScreen() {
   if (!booking) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <Header title="Booking" onBack={() => navigation.goBack()} />
-        <Text style={styles.missing}>Booking not found.</Text>
+        <Header title={t('bookingTitle')} onBack={() => navigation.goBack()} />
+        <Text style={styles.missing}>{t('bookingNotFound')}</Text>
       </SafeAreaView>
     );
   }
 
   const svc = getServiceById(booking.serviceId);
-  const slotLabel = TIME_SLOTS.find((s) => s.value === booking.preferredSlot)?.label ?? '';
+  const slotLabel = booking.preferredSlot
+    ? tTimeSlot(booking.preferredSlot as TimeSlot).label
+    : '';
   const currentIndex = TIMELINE_ORDER.indexOf(booking.status);
   const isCancelled = booking.status === 'CANCELLED';
 
   const steps = TIMELINE_ORDER.map((s, i) => ({
-    label: TIMELINE_LABELS[s],
+    label: tTimeline(s),
     done: !isCancelled && i <= currentIndex,
     active: !isCancelled && i === currentIndex,
   }));
 
   const onCancel = () =>
-    Alert.alert('Cancel booking?', 'This action cannot be undone.', [
-      { text: 'Keep', style: 'cancel' },
-      { text: 'Cancel Booking', style: 'destructive', onPress: () => cancelBooking(booking.bookingId) },
+    Alert.alert(t('cancelBookingTitle'), t('cancelBookingBody'), [
+      { text: t('keep'), style: 'cancel' },
+      {
+        text: t('cancelBookingBtn'),
+        style: 'destructive',
+        onPress: () => cancelBooking(booking.bookingId),
+      },
     ]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header title={booking.bookingId} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View style={[styles.iconWrap, { backgroundColor: `${svc?.color}1A` }]}>
-            <ServiceIcon name={svc?.icon ?? 'leaf'} color={svc?.color} size={30} />
-          </View>
-          <Text style={styles.serviceName}>{booking.serviceName}</Text>
-          <StatusBadge status={booking.status} />
-        </View>
+        <ImageBackground
+          source={{ uri: SERVICE_IMAGES[booking.serviceId] ?? svc?.image }}
+          style={styles.heroImage}
+          imageStyle={{ borderRadius: Radius.lg }}
+        >
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.75)']}
+            style={styles.heroGradient}
+          >
+            <Text style={styles.serviceNameHero}>
+              {tService(booking.serviceId, booking.serviceName)}
+            </Text>
+            <StatusBadge status={booking.status} />
+          </LinearGradient>
+        </ImageBackground>
 
-        <Section title="Location Details">
-          <Row label="State" value={booking.state} />
-          <Row label="District" value={booking.district} />
-          <Row label="Mandal" value={booking.mandal} />
-          <Row label="Village" value={booking.village} />
-          <Row label="Farmer" value={booking.farmerName} />
+        <Section title={t('secLocationDetails')}>
+          <Row label={t('lblState')} value={booking.state} />
+          <Row label={t('lblDistrict')} value={booking.district} />
+          <Row label={t('lblMandal')} value={booking.mandal} />
+          <Row label={t('lblVillage')} value={booking.village} />
+          <Row label={t('lblFarmer')} value={booking.farmerName} />
         </Section>
 
-        <Section title="Crop & Area">
-          <Row label="Crop" value={booking.cropType} />
-          <Row label="Area" value={`${booking.areaValue} ${booking.areaUnit} (${booking.areaInAcres} acres)`} />
+        <Section title={t('secCropArea')}>
+          <Row label={t('lblCrop')} value={tCrop(booking.cropType)} />
+          <Row
+            label={t('lblAreaDetail')}
+            value={t('areaDetailFormat', {
+              value: booking.areaValue,
+              unit: tAreaUnit(booking.areaUnit),
+              acres: booking.areaInAcres,
+              acresLabel: t('acres'),
+            })}
+          />
         </Section>
 
-        <Section title="Service & Schedule">
-          <Row label="Service" value={booking.serviceName} />
-          <Row label="Date" value={formatDateLong(booking.preferredDate)} />
-          <Row label="Slot" value={slotLabel} />
-          {booking.specialInstructions ? <Row label="Notes" value={booking.specialInstructions} /> : null}
+        <Section title={t('secServiceSchedule')}>
+          <Row label={t('lblService')} value={tService(booking.serviceId, booking.serviceName)} />
+          <Row label={t('lblDate')} value={formatDateLong(booking.preferredDate)} />
+          <Row label={t('lblSlot')} value={slotLabel} />
+          {booking.specialInstructions ? (
+            <Row label={t('lblNotes')} value={booking.specialInstructions} />
+          ) : null}
         </Section>
 
         {booking.assignedAgent ? (
-          <Section title="Team Assigned">
-            <Row label="Agent" value={booking.assignedAgent.name} />
-            <Row label="Phone" value={booking.assignedAgent.phone} />
+          <Section title={t('secTeamAssigned')}>
+            <Row label={t('lblAgent')} value={booking.assignedAgent.name} />
+            <Row label={t('lblPhone')} value={booking.assignedAgent.phone} />
           </Section>
         ) : null}
 
-        <Section title="Payment">
-          <Row label="Base" value={formatINR(booking.baseAmount)} />
-          <Row label="GST (18%)" value={formatINR(booking.gstAmount)} />
-          <Row label="Total" value={formatINR(booking.totalAmount)} bold />
-          <Row label="Status" value={booking.paymentStatus.toUpperCase()} />
+        <Section title={t('secPayment')}>
+          <Row label={t('lblBase')} value={formatINR(booking.baseAmount)} />
+          <Row label={t('reviewGst')} value={formatINR(booking.gstAmount)} />
+          <Row label={t('lblTotal')} value={formatINR(booking.totalAmount)} bold />
+          <Row label={t('lblStatus')} value={tPaymentStatus(booking.paymentStatus)} />
         </Section>
 
-        <Section title="Status Timeline">
+        <Section title={t('secStatusTimeline')}>
           <Timeline steps={steps} />
         </Section>
 
         <View style={styles.actions}>
           {booking.status === 'PENDING_PAYMENT' ? (
-            <AnimatedButton label="Cancel Booking" variant="danger" shimmer={false} onPress={onCancel} />
+            <AnimatedButton
+              label={t('cancelBookingBtn')}
+              variant="danger"
+              shimmer={false}
+              onPress={onCancel}
+            />
           ) : null}
           {booking.status === 'COMPLETED' ? (
             <AnimatedButton
-              label="Download Report"
+              label={t('downloadReport')}
               icon={<Download size={18} color={Colors.white} />}
-              onPress={() => Alert.alert('Report', 'Report download will open the PDF viewer.')}
+              onPress={() => Alert.alert(t('downloadReport'), t('downloadReportMsg'))}
             />
           ) : null}
           <View style={styles.supportRow}>
             <AnimatedButton
-              label="Call"
+              label={t('call')}
               variant="outline"
               shimmer={false}
               style={styles.supportBtn}
@@ -139,7 +162,7 @@ export default function BookingDetailScreen() {
               onPress={() => Linking.openURL('tel:+919876543210')}
             />
             <AnimatedButton
-              label="WhatsApp"
+              label={t('whatsapp')}
               variant="outline"
               shimmer={false}
               style={styles.supportBtn}
@@ -175,15 +198,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   missing: { textAlign: 'center', marginTop: Spacing.xl, fontFamily: Typography.fontBody, color: Colors.textMuted },
   scroll: { padding: Spacing.lg, gap: Spacing.base, paddingBottom: Spacing['3xl'] },
-  hero: { alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
-  iconWrap: {
-    width: 64,
-    height: 64,
+  heroImage: { height: 200, marginBottom: Spacing.sm, borderRadius: Radius.lg, overflow: 'hidden' },
+  heroGradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: Spacing.lg,
+    gap: Spacing.sm,
     borderRadius: Radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  serviceName: { fontFamily: Typography.fontDisplay, fontSize: Typography.sizes.xl, color: Colors.textPrimary },
+  serviceNameHero: {
+    fontFamily: Typography.heading,
+    fontSize: Typography.sizes.xl,
+    color: Colors.textOnDark,
+  },
   section: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,

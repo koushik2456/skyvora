@@ -10,9 +10,11 @@ import FadeUp from '@/components/ui/FadeUp';
 import OTPInput from '@/components/ui/OTPInput';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import LoadingOverlay from '@/components/common/LoadingOverlay';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { isValidOtp } from '@/utils/validators';
 import { useAuthStore } from '@/store/authStore';
+import { useLanguageStore } from '@/store/languageStore';
 import type { AuthStackParamList } from '@/navigation/types';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'OTP'>;
@@ -21,28 +23,29 @@ type Rt = RouteProp<AuthStackParamList, 'OTP'>;
 export default function OTPScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Rt>();
+  const { t } = useTranslation();
   const [otp, setOtp] = useState('');
   const [seconds, setSeconds] = useState(30);
   const [loading, setLoading] = useState(false);
   const setUser = useAuthStore((s) => s.setUser);
   const setToken = useAuthStore((s) => s.setToken);
+  const language = useLanguageStore((s) => s.language);
 
   useEffect(() => {
     if (seconds <= 0) return;
-    const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [seconds]);
 
   const verify = () => {
     setLoading(true);
-    // Firebase seam: replace with confirmationResult.confirm(otp)
     setTimeout(() => {
       setToken('mock-id-token');
       setUser({
         uid: `user-${params.phone}`,
         phone: `+91${params.phone}`,
         name: params.name ?? 'Skyvora Farmer',
-        language: 'en',
+        language,
         createdAt: new Date().toISOString(),
       });
       setLoading(false);
@@ -50,6 +53,10 @@ export default function OTPScreen() {
   };
 
   const isSignup = params.mode === 'signup';
+  const title =
+    isSignup && params.name
+      ? t('otpTitleHi', { name: params.name.split(' ')[0] })
+      : t('verifyNumber');
 
   return (
     <View style={styles.container}>
@@ -58,6 +65,7 @@ export default function OTPScreen() {
         colors={[Colors.dark.background, '#0B1B38', Colors.dark.background]}
         style={StyleSheet.absoluteFill}
       />
+
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <Pressable style={styles.back} onPress={() => navigation.goBack()} hitSlop={12}>
           <ArrowLeft size={22} color={Colors.dark.textPrimary} />
@@ -65,45 +73,39 @@ export default function OTPScreen() {
 
         <View style={styles.body}>
           <FadeUp>
-            <Text style={styles.kicker}>
-              {isSignup ? 'ALMOST THERE' : 'WELCOME BACK'}
-            </Text>
-            <Text style={styles.title}>
-              {isSignup && params.name ? `Hi ${params.name.split(' ')[0]},` : 'Verify your number'}
-            </Text>
+            <Text style={styles.kicker}>{isSignup ? t('almostThere') : t('welcomeBack')}</Text>
+            <Text style={styles.title}>{title}</Text>
             <Text style={styles.sub}>
-              Enter the 6-digit code sent to{' '}
-              <Text style={styles.phone}>+91 {params.phone}</Text>
+              {t('otpSub', { phone: `+91 ${params.phone}` })}
             </Text>
           </FadeUp>
 
           <FadeUp delay={150}>
-            <View style={styles.otpWrap}>
+            <View style={styles.otpCard}>
               <OTPInput value={otp} onChange={setOtp} dark />
+              <View style={styles.resendRow}>
+                {seconds > 0 ? (
+                  <Text style={styles.resendMuted}>
+                    {t('resendIn', { seconds: seconds.toString().padStart(2, '0') })}
+                  </Text>
+                ) : (
+                  <Text style={styles.resend} onPress={() => setSeconds(30)}>
+                    {t('resendOtp')}
+                  </Text>
+                )}
+              </View>
             </View>
           </FadeUp>
 
-          <View style={styles.resendRow}>
-            {seconds > 0 ? (
-              <Text style={styles.resendMuted}>
-                Resend code in 0:{seconds.toString().padStart(2, '0')}
-              </Text>
-            ) : (
-              <Text style={styles.resend} onPress={() => setSeconds(30)}>
-                Resend OTP
-              </Text>
-            )}
-          </View>
-
           <AnimatedButton
-            label={isSignup ? 'Verify & Create Account' : 'Verify & Sign In'}
+            label={isSignup ? t('verifyCreateAccount') : t('verifySignIn')}
             disabled={!isValidOtp(otp)}
             onPress={verify}
           />
-          <Text style={styles.devHint}>Demo: enter any 6 digits to continue.</Text>
+          <Text style={styles.devHint}>{t('demoHint')}</Text>
         </View>
       </SafeAreaView>
-      <LoadingOverlay visible={loading} message="Verifying..." />
+      <LoadingOverlay visible={loading} message={t('verifying')} />
     </View>
   );
 }
@@ -142,9 +144,17 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.base,
     color: Colors.dark.textSecondary,
     marginTop: Spacing.xs,
+    lineHeight: 22,
   },
-  phone: { fontFamily: Typography.fontBodySemi, color: Colors.dark.textPrimary },
-  otpWrap: { marginTop: Spacing.sm },
+  otpCard: {
+    backgroundColor: Colors.dark.glassStrong,
+    borderRadius: Radius['2xl'],
+    borderWidth: 1,
+    borderColor: Colors.dark.borderStrong,
+    padding: Spacing.lg,
+    gap: Spacing.base,
+    marginTop: Spacing.sm,
+  },
   resendRow: { alignItems: 'center' },
   resendMuted: {
     fontFamily: Typography.fontBody,

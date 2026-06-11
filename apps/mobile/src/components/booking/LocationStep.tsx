@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useLocationStore } from '@/store/locationStore';
 import { isValidFarmerName } from '@/utils/validators';
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function LocationStep({ farmerName, onFarmerName }: Props) {
+  const { t } = useTranslation();
   const {
     allStates,
     selectedState,
@@ -31,44 +33,43 @@ export default function LocationStep({ farmerName, onFarmerName }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Where is your farm?</Text>
-      <Text style={styles.subtitle}>Select your location to find available services.</Text>
+      <Text style={styles.title}>{t('locationTitle')}</Text>
+      <Text style={styles.subtitle}>{t('locationSub')}</Text>
 
       <SearchableDropdown
-        label="State"
-        placeholder="Select your state"
+        label={t('lblState')}
+        placeholder={t('phSelectState')}
         items={allStates}
         value={selectedState}
         onSelect={(item) => setSelectedState(item as any)}
       />
       <SearchableDropdown
-        label="District"
-        placeholder="Select your district"
+        label={t('lblDistrict')}
+        placeholder={t('phSelectDistrict')}
         items={availableDistricts}
         value={selectedDistrict}
         onSelect={(item) => setSelectedDistrict(item as any)}
         disabled={!selectedState}
-        disabledHint="Select State first"
+        disabledHint={t('hintSelectStateFirst')}
       />
       <SearchableDropdown
-        label="Mandal"
-        placeholder="Select your mandal"
+        label={t('lblMandal')}
+        placeholder={t('phSelectMandal')}
         items={availableMandals}
         value={selectedMandal}
         onSelect={(item) => setSelectedMandal(item as any)}
         disabled={!selectedDistrict}
-        disabledHint="Select District first"
+        disabledHint={t('hintSelectDistrictFirst')}
       />
       {selectedMandal && availableVillages.length === 0 ? (
-        // LGD has no villages for some urban mandals — fall back to free text
         <View>
-          <Text style={styles.fieldLabel}>Village / Locality</Text>
+          <Text style={styles.fieldLabel}>{t('lblVillageLocality')}</Text>
           <TextInput
             value={selectedVillage?.name ?? ''}
-            onChangeText={(t) =>
-              setSelectedVillage({ id: `custom-${selectedMandal.id}`, name: t })
+            onChangeText={(text) =>
+              setSelectedVillage({ id: `custom-${selectedMandal.id}`, name: text })
             }
-            placeholder="Type your village or locality name"
+            placeholder={t('phVillageLocality')}
             placeholderTextColor={Colors.textMuted}
             style={styles.input}
             maxLength={80}
@@ -76,23 +77,23 @@ export default function LocationStep({ farmerName, onFarmerName }: Props) {
         </View>
       ) : (
         <SearchableDropdown
-          label="Village"
-          placeholder="Select your village"
+          label={t('lblVillage')}
+          placeholder={t('phSelectVillage')}
           items={availableVillages}
           value={selectedVillage}
           onSelect={(item) => setSelectedVillage(item as any)}
           disabled={!selectedMandal}
-          disabledHint="Select Mandal first"
+          disabledHint={t('hintSelectMandalFirst')}
         />
       )}
 
       <View>
-        <Text style={styles.fieldLabel}>Farmer Name</Text>
+        <Text style={styles.fieldLabel}>{t('lblFarmerName')}</Text>
         <TextInput
           value={farmerName}
           onChangeText={onFarmerName}
           onBlur={() => setTouched(true)}
-          placeholder="Enter full name"
+          placeholder={t('phEnterFullName')}
           placeholderTextColor={Colors.textMuted}
           style={[
             styles.input,
@@ -101,7 +102,7 @@ export default function LocationStep({ farmerName, onFarmerName }: Props) {
           maxLength={80}
         />
         {touched && farmerName.length > 0 && !nameValid ? (
-          <Text style={styles.error}>Use 2-80 letters (spaces and dots allowed).</Text>
+          <Text style={styles.error}>{t('nameValidationError')}</Text>
         ) : null}
       </View>
     </View>
@@ -109,9 +110,16 @@ export default function LocationStep({ farmerName, onFarmerName }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.base },
-  title: { fontFamily: Typography.fontDisplay, fontSize: Typography.sizes.xl, color: Colors.textPrimary },
-  subtitle: { fontFamily: Typography.fontBody, fontSize: Typography.sizes.sm, color: Colors.textSecondary, marginTop: -Spacing.sm },
+  wrap: {
+    gap: Spacing.base,
+    backgroundColor: Colors.sectionBg,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  title: { fontFamily: Typography.heading, fontSize: Typography.sizes.xl, color: Colors.mint },
+  subtitle: { fontFamily: Typography.body, fontSize: Typography.sizes.sm, color: Colors.sage, marginTop: -Spacing.sm },
   fieldLabel: {
     fontFamily: Typography.fontBodyMedium,
     fontSize: Typography.sizes.xs,
@@ -128,9 +136,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     fontFamily: Typography.fontBodySemi,
     fontSize: Typography.sizes.base,
-    color: Colors.textPrimary,
+    color: Colors.mint,
   },
-  inputValid: { borderColor: Colors.primary },
+  inputValid: { borderColor: Colors.sage },
   inputError: { borderColor: Colors.danger },
   error: { fontFamily: Typography.fontBody, fontSize: Typography.sizes.xs, color: Colors.danger, marginTop: 4 },
 });

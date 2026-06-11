@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 
@@ -15,36 +15,39 @@ interface Props {
 export default function StepProgress({ current, total, labels }: Props) {
   const pct = ((current + 1) / total) * 100;
   const fillStyle = useAnimatedStyle(() => ({
-    width: withTiming(`${pct}%`, { duration: 350 }),
+    width: withSpring(`${pct}%`, { damping: 18, stiffness: 120 }),
   }));
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.headerRow}>
-        <Text style={styles.step}>
-          Step {current + 1} of {total}
-        </Text>
-        {labels?.[current] ? <Text style={styles.label}>{labels[current]}</Text> : null}
-      </View>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, fillStyle]} />
       </View>
+      {labels ? (
+        <View style={styles.labelsRow}>
+          {labels.map((label, i) => (
+            <Text
+              key={label}
+              style={[styles.stepLabel, i === current && styles.stepLabelActive]}
+              numberOfLines={1}
+            >
+              {label}
+            </Text>
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.caption}>
+          Step {current + 1} of {total}
+        </Text>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  step: { fontFamily: Typography.fontBodySemi, color: Colors.primary, fontSize: Typography.sizes.sm },
-  label: { fontFamily: Typography.fontBody, color: Colors.textSecondary, fontSize: Typography.sizes.sm },
+  wrap: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.sm },
   track: {
-    height: 8,
+    height: 4,
     borderRadius: Radius.full,
     backgroundColor: Colors.border,
     overflow: 'hidden',
@@ -52,6 +55,28 @@ const styles = StyleSheet.create({
   fill: {
     height: '100%',
     borderRadius: Radius.full,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary,
+  },
+  labelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  stepLabel: {
+    flex: 1,
+    fontFamily: Typography.body,
+    fontSize: 9,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  stepLabelActive: {
+    fontFamily: Typography.bodyMed,
+    color: Colors.primary,
+  },
+  caption: {
+    fontFamily: Typography.bodyMed,
+    fontSize: Typography.sizes.xs,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });

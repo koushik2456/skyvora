@@ -1,66 +1,98 @@
+import { Platform, type ViewStyle } from 'react-native';
+
 /**
- * Skyvora hybrid design system.
- * Dark "Drone Tech" set for hero / home / footer sections,
- * light editorial set for content sections.
+ * Dark botanical luxury palette.
+ * Soft matte greens — near-black → sage → mint. No neon or pure black.
  */
+export const Palette = {
+  bgDeep: '#051F20',
+  bgForest: '#0B2B26',
+  bgEmerald: '#163832',
+  jade: '#235347',
+  sage: '#8EB69B',
+  mint: '#DAF1DE',
+} as const;
+
 export const Colors = {
-  // Brand
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  primaryLight: '#3B82F6',
-  accent: '#F97316',
-  accentLight: '#FB923C',
-  /** @deprecated alias of accent */
-  secondary: '#F97316',
-  /** @deprecated alias of info */
-  sky: '#38BDF8',
+  // Botanical brand
+  primary: Palette.jade,
+  primaryLight: Palette.sage,
+  primaryDark: Palette.bgForest,
+  accent: Palette.sage,
+  accentDark: Palette.jade,
+  accentLight: Palette.mint,
+  secondary: Palette.sage,
+  sky: Palette.sage,
 
-  // Status
-  danger: '#EF4444',
-  success: '#22C55E',
-  warning: '#F59E0B',
-  info: '#38BDF8',
+  // Status — muted, not neon
+  success: '#5A9E72',
+  warning: '#A68B5B',
+  danger: '#B85C5C',
+  info: Palette.sage,
 
-  // Light content surfaces
-  background: '#F5F6F7',
-  surface: '#FFFFFF',
-  surfaceAlt: '#EDF0F3',
-  textPrimary: '#0B1220',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
-  border: '#E4E9F0',
+  // Surfaces
+  background: Palette.bgDeep,
+  sectionBg: Palette.bgEmerald,
+  cardSoft: Palette.bgEmerald,
+  surface: Palette.bgForest,
+  surfaceAlt: Palette.bgEmerald,
+  surfaceDark: Palette.bgForest,
 
-  // Dark "Drone Tech" surfaces (hero, home shell, footer)
+  // Text
+  textPrimary: Palette.mint,
+  textSecondary: Palette.sage,
+  textMuted: 'rgba(142, 182, 155, 0.75)',
+  /** Higher-contrast secondary on dark cards (bookings, lists). */
+  textSubtle: 'rgba(218, 241, 222, 0.82)',
+  textOnDark: Palette.mint,
+  textOnDarkMuted: Palette.sage,
+
+  // UI
+  border: 'rgba(142, 182, 155, 0.18)',
+  borderDark: 'rgba(35, 83, 71, 0.5)',
+  overlay: 'rgba(5, 31, 32, 0.72)',
+
+  skyTop: Palette.bgDeep,
+  skyBottom: Palette.bgEmerald,
+
+  white: Palette.mint,
+  black: Palette.bgDeep,
+
+  // Named palette shortcuts
+  ...Palette,
+
   dark: {
-    background: '#081120',
-    surface: '#0D1A2F',
-    surfaceAlt: '#122340',
-    card: '#0F1E38',
-    border: 'rgba(255,255,255,0.08)',
-    borderStrong: 'rgba(255,255,255,0.14)',
-    glass: 'rgba(255,255,255,0.06)',
-    glassStrong: 'rgba(255,255,255,0.10)',
-    textPrimary: '#F8FAFC',
-    textSecondary: '#9FB0C7',
-    textMuted: '#5D6F8A',
-    glow: 'rgba(37,99,235,0.45)',
-    accentGlow: 'rgba(249,115,22,0.35)',
+    background: Palette.bgDeep,
+    surface: Palette.bgForest,
+    surfaceAlt: Palette.bgEmerald,
+    card: Palette.bgEmerald,
+    border: 'rgba(142, 182, 155, 0.12)',
+    borderStrong: 'rgba(142, 182, 155, 0.22)',
+    glass: 'rgba(22, 56, 50, 0.55)',
+    glassStrong: 'rgba(22, 56, 50, 0.75)',
+    textPrimary: Palette.mint,
+    textSecondary: Palette.sage,
+    textMuted: 'rgba(142, 182, 155, 0.55)',
+    glow: 'rgba(142, 182, 155, 0.35)',
+    accentGlow: 'rgba(218, 241, 222, 0.2)',
   },
-
-  overlay: 'rgba(2,8,20,0.55)',
-  white: '#FFFFFF',
-  black: '#000000',
 } as const;
 
 export const Typography = {
-  // Plus Jakarta Sans for display / headings, Inter for body
-  fontHero: 'PlusJakartaSans_800ExtraBold',
-  fontDisplay: 'PlusJakartaSans_700Bold',
-  fontDisplaySemi: 'PlusJakartaSans_600SemiBold',
+  display: 'Poppins_700Bold',
+  heading: 'Poppins_600SemiBold',
+  body: 'Inter_400Regular',
+  bodyMed: 'Inter_500Medium',
+  mono: 'JetBrainsMono_400Regular',
+
+  fontHero: 'Poppins_700Bold',
+  fontDisplay: 'Poppins_700Bold',
+  fontDisplaySemi: 'Poppins_600SemiBold',
   fontBody: 'Inter_400Regular',
   fontBodyMedium: 'Inter_500Medium',
   fontBodySemi: 'Inter_600SemiBold',
   fontBodyBold: 'Inter_700Bold',
+
   sizes: {
     xs: 11,
     sm: 13,
@@ -79,6 +111,40 @@ export const Typography = {
   },
 } as const;
 
+export const TextStyles = {
+  heroTitle: {
+    fontFamily: Typography.display,
+    fontSize: 36,
+    color: Colors.mint,
+    lineHeight: 44,
+  },
+  sectionHead: {
+    fontFamily: Typography.heading,
+    fontSize: 22,
+    color: Colors.mint,
+  },
+  cardTitle: {
+    fontFamily: Typography.heading,
+    fontSize: 16,
+    color: Colors.mint,
+  },
+  body: {
+    fontFamily: Typography.body,
+    fontSize: 14,
+    color: Colors.sage,
+  },
+  price: {
+    fontFamily: Typography.mono,
+    fontSize: 18,
+    color: Colors.sage,
+  },
+  caption: {
+    fontFamily: Typography.body,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+} as const;
+
 export const Spacing = {
   xs: 4,
   sm: 8,
@@ -92,48 +158,103 @@ export const Spacing = {
 } as const;
 
 export const Radius = {
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 22,
-  '2xl': 28,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  '2xl': 32,
   full: 9999,
 } as const;
 
 export const Shadow = {
+  sm: {
+    shadowColor: '#051F20',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#051F20',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#051F20',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  hero: {
+    shadowColor: Palette.jade,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 12,
+  },
   card: {
-    shadowColor: '#0B1220',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 30,
+    shadowColor: '#051F20',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
     elevation: 4,
   },
   floating: {
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowColor: Palette.jade,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 12,
   },
   glow: {
-    shadowColor: '#2563EB',
+    shadowColor: Palette.sage,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.35,
     shadowRadius: 18,
     elevation: 8,
   },
   accentGlow: {
-    shadowColor: '#F97316',
+    shadowColor: Palette.mint,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.25,
     shadowRadius: 18,
     elevation: 8,
   },
 } as const;
 
-/** Motion language: smooth, weighted, never bouncy. */
+type NativeShadow = {
+  shadowColor: string;
+  shadowOffset: { width: number; height: number };
+  shadowOpacity: number;
+  shadowRadius: number;
+  elevation?: number;
+};
+
+export function resolveShadow(style: NativeShadow): ViewStyle {
+  if (Platform.OS === 'web') {
+    const { shadowColor, shadowOffset, shadowOpacity, shadowRadius } = style;
+    const hex = shadowColor.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16) || 0;
+    const g = parseInt(hex.slice(2, 4), 16) || 0;
+    const b = parseInt(hex.slice(4, 6), 16) || 0;
+    return {
+      boxShadow: `${shadowOffset.width}px ${shadowOffset.height}px ${shadowRadius}px rgba(${r},${g},${b},${shadowOpacity})`,
+    };
+  }
+  return style;
+}
+
 export const Motion = {
   duration: { fast: 250, base: 350, slow: 500 },
-  /** cubic-bezier(0.22, 1, 0.36, 1) — use with Reanimated Easing.bezier */
   bezier: [0.22, 1, 0.36, 1] as const,
 } as const;
+
+/** Botanical hero gradient stops for overlays. */
+export const BotanicalGradient = {
+  hero: ['rgba(5,31,32,0.15)', 'rgba(5,31,32,0.55)', 'rgba(5,31,32,0.92)'] as const,
+  card: ['transparent', 'rgba(5,31,32,0.85)'] as const,
+  onboarding: ['transparent', 'rgba(5,31,32,0.88)'] as const,
+};

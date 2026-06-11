@@ -7,7 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FadeUp from '@/components/ui/FadeUp';
 import ServiceIcon from '@/components/ui/ServiceIcon';
-import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Colors, Radius, Shadow, Spacing, Typography, resolveShadow } from '@/constants/theme';
 import { getCropVisual, getReportDetail } from '@/constants/reports';
 import { useBookingsRepo } from '@/store/bookingsRepo';
 import { formatDate } from '@/utils/date';
@@ -17,27 +18,33 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ReportsScreen() {
   const navigation = useNavigation<Nav>();
+  const { t, tService, tCrop } = useTranslation();
   const bookings = useBookingsRepo((s) => s.bookings);
   const reports = bookings.filter((b) => b.status === 'COMPLETED' || b.reportUrl);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.headerWrap}>
-        <Text style={styles.heading}>Reports</Text>
-        <Text style={styles.headingSub}>Crop intelligence from your completed missions</Text>
-      </View>
       <FlatList
         data={reports}
+        ListHeaderComponent={
+          <View style={styles.headerWrap}>
+            <View style={styles.headerTop}>
+              <Text style={styles.heading}>{t('reports')}</Text>
+              <View style={styles.countPill}>
+                <Text style={styles.countText}>{reports.length}</Text>
+              </View>
+            </View>
+            <Text style={styles.headingSub}>{t('reportsSub')}</Text>
+          </View>
+        }
         keyExtractor={(b) => b.bookingId}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.empty}>
             <FileText size={56} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>No reports yet</Text>
-            <Text style={styles.emptySub}>
-              Your service reports will appear here after completion.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('noReportsTitle')}</Text>
+            <Text style={styles.emptySub}>{t('noReportsSub')}</Text>
           </View>
         }
         renderItem={({ item, index }) => {
@@ -50,7 +57,7 @@ export default function ReportsScreen() {
                   navigation.navigate('ReportDetail', { bookingId: item.bookingId })
                 }
               >
-                <View style={[styles.card, Shadow.card]}>
+                <View style={[styles.card, resolveShadow(Shadow.card)]}>
                   {/* Crop visual header */}
                   <LinearGradient
                     colors={visual.colors}
@@ -60,16 +67,18 @@ export default function ReportsScreen() {
                   >
                     <ServiceIcon name={visual.icon} size={42} color="rgba(255,255,255,0.95)" />
                     <View style={styles.cropPill}>
-                      <Text style={styles.cropPillText}>{item.cropType}</Text>
+                      <Text style={styles.cropPillText}>{tCrop(item.cropType)}</Text>
                     </View>
                   </LinearGradient>
 
                   <View style={styles.cardBody}>
                     <View style={styles.cardTopRow}>
-                      <Text style={styles.service}>{item.serviceName}</Text>
+                      <Text style={styles.service}>
+                        {tService(item.serviceId, item.serviceName)}
+                      </Text>
                       <View style={styles.scoreChip}>
                         <Text style={styles.scoreText}>{detail.healthScore}</Text>
-                        <Text style={styles.scoreLabel}>health</Text>
+                        <Text style={styles.scoreLabel}>{t('health')}</Text>
                       </View>
                     </View>
                     <View style={styles.metaRow}>
@@ -80,10 +89,11 @@ export default function ReportsScreen() {
                     </View>
                     <View style={styles.footRow}>
                       <Text style={styles.footText}>
-                        {item.areaInAcres} acres · {Math.round(detail.sprayCoverage * 100)}% covered
+                        {item.areaInAcres} {t('acres')} · {Math.round(detail.sprayCoverage * 100)}%{' '}
+                        {t('covered')}
                       </Text>
                       <View style={styles.viewRow}>
-                        <Text style={styles.viewText}>View Report</Text>
+                        <Text style={styles.viewText}>{t('viewReport')}</Text>
                         <ChevronRight size={16} color={Colors.primary} />
                       </View>
                     </View>
@@ -100,7 +110,18 @@ export default function ReportsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  headerWrap: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.sm, gap: 2 },
+  headerWrap: { gap: 2, marginBottom: Spacing.base },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  countPill: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    minWidth: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  countText: { fontFamily: Typography.fontBodySemi, fontSize: Typography.sizes.sm, color: Colors.white },
   heading: {
     fontFamily: Typography.fontDisplay,
     fontSize: Typography.sizes['2xl'],

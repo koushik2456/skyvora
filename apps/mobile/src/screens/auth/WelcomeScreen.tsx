@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,22 +14,24 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MotiView } from '@/components/ui/Motion';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import SegmentedControl from '@/components/ui/SegmentedControl';
-import GlassCard from '@/components/ui/GlassCard';
 import FadeUp from '@/components/ui/FadeUp';
-import DroneLogo from '@/components/ui/DroneLogo';
-import PulseRing from '@/components/ui/PulseRing';
+import LanguageSelector from '@/components/ui/LanguageSelector';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { isValidFarmerName, isValidPhone } from '@/utils/validators';
 import type { AuthMode } from '@/store/authStore';
 import type { AuthStackParamList } from '@/navigation/types';
 
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1200&q=80';
+
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Welcome'>;
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,13 +52,12 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Cinematic dark hero backdrop */}
-      <LinearGradient
-        colors={[Colors.dark.background, '#0B1B38', Colors.dark.background]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[styles.orb, styles.orbBlue]} />
-      <View style={[styles.orb, styles.orbOrange]} />
+      <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.heroBg}>
+        <LinearGradient
+          colors={['rgba(8,17,32,0.55)', 'rgba(8,17,32,0.92)', Colors.dark.background]}
+          style={StyleSheet.absoluteFill}
+        />
+      </ImageBackground>
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
@@ -67,35 +69,27 @@ export default function WelcomeScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.hero}>
-              <PulseRing size={150} color={Colors.primary}>
-                <MotiView
-                  from={{ opacity: 0, scale: 0.7, translateY: 12 }}
-                  animate={{ opacity: 1, scale: 1, translateY: 0 }}
-                  transition={{ type: 'timing', duration: 600 }}
-                  style={styles.logoBadge}
-                >
-                  <DroneLogo size={64} color={Colors.white} accent={Colors.accent} />
-                </MotiView>
-              </PulseRing>
+            <FadeUp>
+              <LanguageSelector dark showLabel label={t('language')} />
+            </FadeUp>
 
-              <FadeUp delay={150}>
+            <View style={styles.hero}>
+              <FadeUp delay={100}>
+                <Text style={styles.kicker}>{t('welcomeKicker')}</Text>
                 <Text style={styles.brand}>SKYVORA</Text>
               </FadeUp>
-              <FadeUp delay={280}>
-                <Text style={styles.tagline}>
-                  Precision drone services for the modern farm
-                </Text>
+              <FadeUp delay={200}>
+                <Text style={styles.tagline}>{t('welcomeTagline')}</Text>
               </FadeUp>
             </View>
 
-            <FadeUp delay={400} distance={32}>
-              <GlassCard style={styles.card} strong>
+            <FadeUp delay={350} distance={24}>
+              <View style={styles.card}>
                 <SegmentedControl<AuthMode>
                   dark
                   options={[
-                    { label: 'Sign In', value: 'signin' },
-                    { label: 'Sign Up', value: 'signup' },
+                    { label: t('signIn'), value: 'signin' },
+                    { label: t('signUp'), value: 'signup' },
                   ]}
                   value={mode}
                   onChange={setMode}
@@ -103,11 +97,11 @@ export default function WelcomeScreen() {
 
                 {mode === 'signup' && (
                   <View style={styles.field}>
-                    <Text style={styles.label}>Full Name</Text>
+                    <Text style={styles.label}>{t('fullName')}</Text>
                     <TextInput
                       value={name}
                       onChangeText={setName}
-                      placeholder="Enter your full name"
+                      placeholder={t('fullNamePlaceholder')}
                       placeholderTextColor={Colors.dark.textMuted}
                       style={styles.input}
                       maxLength={80}
@@ -116,14 +110,14 @@ export default function WelcomeScreen() {
                 )}
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Mobile Number</Text>
+                  <Text style={styles.label}>{t('mobileNumber')}</Text>
                   <View style={[styles.phoneRow, phoneValid && styles.inputValid]}>
                     <Text style={styles.code}>+91</Text>
                     <View style={styles.divider} />
                     <TextInput
                       value={phone}
-                      onChangeText={(t) => setPhone(t.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="10-digit number"
+                      onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))}
+                      placeholder={t('phonePlaceholder')}
                       placeholderTextColor={Colors.dark.textMuted}
                       keyboardType="number-pad"
                       style={styles.phoneInput}
@@ -132,23 +126,20 @@ export default function WelcomeScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.hint}>
-                  We'll send a 6-digit OTP to verify your number.
-                </Text>
+                <Text style={styles.hint}>{t('otpHint')}</Text>
 
                 <AnimatedButton
-                  label={mode === 'signin' ? 'Sign In with OTP' : 'Create Account'}
+                  label={mode === 'signin' ? t('continueWithOtp') : t('createAccount')}
                   disabled={!canContinue}
                   onPress={submit}
-                  style={{ marginTop: Spacing.base }}
+                  style={{ marginTop: Spacing.sm }}
                 />
-              </GlassCard>
+              </View>
             </FadeUp>
 
-            <FadeUp delay={550}>
+            <FadeUp delay={500}>
               <Text style={styles.terms}>
-                By continuing you agree to our <Text style={styles.link}>Terms</Text> &{' '}
-                <Text style={styles.link}>Privacy Policy</Text>.
+                {t('termsAgree', { terms: t('terms'), privacy: t('privacyPolicy') })}
               </Text>
             </FadeUp>
           </ScrollView>
@@ -160,42 +151,30 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
+  heroBg: { ...StyleSheet.absoluteFillObject },
   flex: { flex: 1 },
   safe: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: Spacing.lg, justifyContent: 'center' },
-  orb: { position: 'absolute', borderRadius: 999, opacity: 0.22 },
-  orbBlue: {
-    width: 320,
-    height: 320,
-    top: -90,
-    right: -110,
-    backgroundColor: Colors.primary,
-  },
-  orbOrange: {
-    width: 240,
-    height: 240,
-    bottom: -70,
-    left: -90,
-    backgroundColor: Colors.accent,
-    opacity: 0.14,
-  },
-  hero: { alignItems: 'center', marginBottom: Spacing['2xl'] },
-  logoBadge: {
-    width: 108,
-    height: 108,
-    borderRadius: Radius['2xl'],
-    backgroundColor: Colors.dark.glassStrong,
-    borderWidth: 1,
-    borderColor: Colors.dark.borderStrong,
-    alignItems: 'center',
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
     justifyContent: 'center',
+    paddingVertical: Spacing.xl,
+    gap: Spacing.lg,
+  },
+  hero: { alignItems: 'center', marginBottom: Spacing.md },
+  kicker: {
+    fontFamily: Typography.fontBodySemi,
+    fontSize: Typography.sizes.xs,
+    color: Colors.primaryLight,
+    letterSpacing: Typography.tracking.wide,
+    textAlign: 'center',
   },
   brand: {
     fontFamily: Typography.fontHero,
     fontSize: Typography.sizes['3xl'],
     color: Colors.dark.textPrimary,
     letterSpacing: 6,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.sm,
     textAlign: 'center',
   },
   tagline: {
@@ -204,8 +183,17 @@ const styles = StyleSheet.create({
     color: Colors.dark.textSecondary,
     textAlign: 'center',
     marginTop: Spacing.sm,
+    lineHeight: 22,
+    paddingHorizontal: Spacing.md,
   },
-  card: { padding: Spacing.lg, gap: Spacing.base },
+  card: {
+    backgroundColor: Colors.dark.glassStrong,
+    borderRadius: Radius['2xl'],
+    borderWidth: 1,
+    borderColor: Colors.dark.borderStrong,
+    padding: Spacing.lg,
+    gap: Spacing.base,
+  },
   field: { gap: Spacing.sm },
   label: {
     fontFamily: Typography.fontBodySemi,
@@ -265,8 +253,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xs,
     color: Colors.dark.textMuted,
     textAlign: 'center',
-    marginTop: Spacing.xl,
     lineHeight: 18,
   },
-  link: { color: Colors.primaryLight, fontFamily: Typography.fontBodySemi },
 });

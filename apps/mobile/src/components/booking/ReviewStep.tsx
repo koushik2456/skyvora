@@ -4,58 +4,65 @@ import { MotiView } from '@/components/ui/Motion';
 import { MapPin, Wheat, Plane, CalendarDays, Receipt, Pencil } from 'lucide-react-native';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useBookingStore } from '@/store/bookingStore';
-import { getServiceById, TIME_SLOTS } from '@/constants/services';
+import { getServiceById } from '@/constants/services';
+import { useTranslation } from '@/hooks/useTranslation';
 import { formatINR } from '@/utils/pricing';
 import { formatDateLong } from '@/utils/date';
+import type { TimeSlot } from '@/types';
 
 interface Props {
   onEdit: (step: number) => void;
 }
 
 export default function ReviewStep({ onEdit }: Props) {
+  const { t, tService, tCrop, tTimeSlot, tAreaUnit } = useTranslation();
   const b = useBookingStore();
   const service = getServiceById(b.serviceId);
-  const slotLabel = TIME_SLOTS.find((s) => s.value === b.preferredSlot)?.label ?? '';
+  const slotLabel = b.preferredSlot ? tTimeSlot(b.preferredSlot as TimeSlot).label : '';
   const cost = b.costBreakdown;
+  const acresLabel = t('acres');
 
   const sections = [
     {
       icon: MapPin,
-      title: 'LOCATION',
+      title: t('reviewLocation'),
       step: 0,
       lines: [
         `${b.state} › ${b.district} › ${b.mandal}`,
         b.village,
-        `Farmer: ${b.farmerName}`,
+        t('reviewFarmer', { name: b.farmerName }),
       ],
     },
     {
       icon: Wheat,
-      title: 'CROP & AREA',
+      title: t('reviewCropArea'),
       step: 1,
-      lines: [`${b.cropType} · ${b.areaInAcres} Acres`],
+      lines: [`${tCrop(b.cropType ?? '')} · ${b.areaInAcres} ${acresLabel}`],
     },
     {
       icon: Plane,
-      title: 'SERVICE',
+      title: t('reviewService'),
       step: 2,
-      lines: [service?.name ?? '', `${formatINR(service?.ratePerAcre ?? 0)}/acre`],
+      lines: [
+        tService(b.serviceId ?? '', service?.name),
+        `${formatINR(service?.ratePerAcre ?? 0)}${t('perAcre')}`,
+      ],
     },
     {
       icon: CalendarDays,
-      title: 'SCHEDULE',
+      title: t('reviewSchedule'),
       step: 3,
       lines: [
         b.preferredDate ? formatDateLong(b.preferredDate) : '',
-        `${slotLabel} slot`,
-        ...(b.specialInstructions ? [`Note: ${b.specialInstructions}`] : []),
+        slotLabel ? `${slotLabel} ${t('slotSuffix')}` : '',
+        ...(b.specialInstructions ? [t('reviewNote', { text: b.specialInstructions })] : []),
       ],
     },
   ];
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Review & Confirm</Text>
+      <Text style={styles.title}>{t('reviewTitle')}</Text>
 
       {sections.map((sec, i) => {
         const Icon = sec.icon;
@@ -74,7 +81,7 @@ export default function ReviewStep({ onEdit }: Props) {
               </View>
               <Pressable onPress={() => onEdit(sec.step)} hitSlop={8} style={styles.editBtn}>
                 <Pencil size={13} color={Colors.primary} />
-                <Text style={styles.editText}>Edit</Text>
+                <Text style={styles.editText}>{t('reviewEdit')}</Text>
               </Pressable>
             </View>
             {sec.lines.filter(Boolean).map((line, idx) => (
@@ -94,15 +101,19 @@ export default function ReviewStep({ onEdit }: Props) {
       >
         <View style={styles.cardHeadLeft}>
           <Receipt size={16} color={Colors.primary} />
-          <Text style={styles.cardTitle}>COST BREAKDOWN</Text>
+          <Text style={styles.cardTitle}>{t('reviewCostBreakdown')}</Text>
         </View>
         <Row
-          label={`${b.areaInAcres} acres × ${formatINR(service?.ratePerAcre ?? 0)}`}
+          label={t('reviewAcresRate', {
+            acres: b.areaInAcres ?? 0,
+            acresLabel,
+            rate: formatINR(service?.ratePerAcre ?? 0),
+          })}
           value={formatINR(cost?.base ?? 0)}
         />
-        <Row label="GST (18%)" value={formatINR(cost?.gst ?? 0)} />
+        <Row label={t('reviewGst')} value={formatINR(cost?.gst ?? 0)} />
         <View style={styles.totalDivider} />
-        <Row label="TOTAL" value={formatINR(cost?.total ?? 0)} bold />
+        <Row label={t('reviewTotal')} value={formatINR(cost?.total ?? 0)} bold />
       </MotiView>
     </View>
   );

@@ -12,6 +12,7 @@ import { MotiView } from '@/components/ui/Motion';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Header from '@/components/common/Header';
+import { useTranslation } from '@/hooks/useTranslation';
 import StepProgress from '@/components/ui/StepProgress';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import LocationStep from '@/components/booking/LocationStep';
@@ -19,7 +20,7 @@ import CropAreaStep from '@/components/booking/CropAreaStep';
 import ServiceStep from '@/components/booking/ServiceStep';
 import DateStep from '@/components/booking/DateStep';
 import ReviewStep from '@/components/booking/ReviewStep';
-import { Colors, Shadow, Spacing } from '@/constants/theme';
+import { Colors, Shadow, Spacing, resolveShadow } from '@/constants/theme';
 import { useBookingStore } from '@/store/bookingStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useBookingsRepo } from '@/store/bookingsRepo';
@@ -29,12 +30,13 @@ import { toAcres, isAreaValid } from '@/utils/areaConverter';
 import type { AreaUnit } from '@/types';
 import type { BookingStackParamList } from '@/navigation/types';
 
-const STEP_LABELS = ['Location', 'Crop & Area', 'Service', 'Schedule', 'Review'];
+const STEP_LABEL_KEYS = ['stepLocation', 'stepCrop', 'stepService', 'stepSchedule', 'stepReview'] as const;
 
 type Nav = NativeStackNavigationProp<BookingStackParamList, 'NewBooking'>;
 type Rt = RouteProp<BookingStackParamList, 'NewBooking'>;
 
 export default function NewBookingScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Rt>();
   const preset = route.params?.presetServiceId;
@@ -121,10 +123,10 @@ export default function NewBookingScreen() {
 
   const onBack = () => {
     if (step === 0) {
-      Alert.alert('Discard booking?', 'Your progress will be lost.', [
-        { text: 'Keep editing', style: 'cancel' },
+      Alert.alert(t('discardTitle'), t('discardBody'), [
+        { text: t('keepEditing'), style: 'cancel' },
         {
-          text: 'Discard',
+          text: t('discard'),
           style: 'destructive',
           onPress: () => {
             booking.resetBooking();
@@ -140,8 +142,12 @@ export default function NewBookingScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header title="New Booking" onBack={onBack} />
-      <StepProgress current={step} total={5} labels={STEP_LABELS} />
+      <Header title={t('newBooking')} onBack={onBack} />
+      <StepProgress
+        current={step}
+        total={5}
+        labels={STEP_LABEL_KEYS.map((k) => t(k))}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -151,7 +157,8 @@ export default function NewBookingScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
+          nestedScrollEnabled={Platform.OS === 'android'}
         >
           <MotiView
             key={step}
@@ -205,7 +212,7 @@ export default function NewBookingScreen() {
 
         <View style={styles.footer}>
           <AnimatedButton
-            label={step === 4 ? 'Confirm & Pay' : 'Next'}
+            label={step === 4 ? t('confirmPay') : t('next')}
             disabled={!canProceed()}
             onPress={onNext}
           />
@@ -224,6 +231,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    ...Shadow.card,
+    ...resolveShadow(Shadow.card),
   },
 });

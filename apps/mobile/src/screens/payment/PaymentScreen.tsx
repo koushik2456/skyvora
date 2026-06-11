@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from '@/components/ui/Motion';
@@ -9,6 +9,7 @@ import Header from '@/components/common/Header';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import LoadingOverlay from '@/components/common/LoadingOverlay';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useBookingsRepo } from '@/store/bookingsRepo';
 import { formatINR } from '@/utils/pricing';
 import type { BookingStackParamList } from '@/navigation/types';
@@ -16,13 +17,8 @@ import type { BookingStackParamList } from '@/navigation/types';
 type Nav = NativeStackNavigationProp<BookingStackParamList, 'Payment'>;
 type Rt = RouteProp<BookingStackParamList, 'Payment'>;
 
-const METHODS = [
-  { id: 'upi', label: 'UPI', sub: 'GPay, PhonePe, Paytm', icon: Smartphone },
-  { id: 'card', label: 'Card', sub: 'Credit / Debit', icon: CreditCard },
-  { id: 'netbanking', label: 'Net Banking', sub: 'All major banks', icon: Building2 },
-];
-
 export default function PaymentScreen() {
+  const { t, tService } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Rt>();
   const booking = useBookingsRepo((s) => s.getById(params.bookingId));
@@ -30,11 +26,19 @@ export default function PaymentScreen() {
   const [method, setMethod] = useState('upi');
   const [loading, setLoading] = useState(false);
 
+  const methods = useMemo(
+    () => [
+      { id: 'upi', label: t('payUpi'), sub: t('payUpiSub'), icon: Smartphone },
+      { id: 'card', label: t('payCard'), sub: t('payCardSub'), icon: CreditCard },
+      { id: 'netbanking', label: t('payNetBanking'), sub: t('payNetBankingSub'), icon: Building2 },
+    ],
+    [t]
+  );
+
   if (!booking) return null;
 
   const pay = () => {
     setLoading(true);
-    // Mock Razorpay checkout + signature verification
     setTimeout(() => {
       markPaid(booking.bookingId, `pay_${Date.now()}`);
       setLoading(false);
@@ -44,22 +48,24 @@ export default function PaymentScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header title="Payment" onBack={() => navigation.goBack()} />
+      <Header title={t('paymentTitle')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.summary}>
-          <Text style={styles.summaryLabel}>{booking.serviceName}</Text>
+          <Text style={styles.summaryLabel}>
+            {tService(booking.serviceId, booking.serviceName)}
+          </Text>
           <Text style={styles.summaryMeta}>
-            {booking.areaInAcres} acres · {booking.village}, {booking.district}
+            {booking.areaInAcres} {t('acres')} · {booking.village}, {booking.district}
           </Text>
           <View style={styles.divider} />
           <View style={styles.amountRow}>
-            <Text style={styles.amountLabel}>Amount Payable</Text>
+            <Text style={styles.amountLabel}>{t('amountPayable')}</Text>
             <Text style={styles.amount}>{formatINR(booking.totalAmount)}</Text>
           </View>
         </View>
 
-        <Text style={styles.section}>Choose Payment Method</Text>
-        {METHODS.map((m) => {
+        <Text style={styles.section}>{t('choosePaymentMethod')}</Text>
+        {methods.map((m) => {
           const active = method === m.id;
           const Icon = m.icon;
           return (
@@ -85,14 +91,17 @@ export default function PaymentScreen() {
 
         <View style={styles.secureRow}>
           <ShieldCheck size={16} color={Colors.success} />
-          <Text style={styles.secureText}>Secured by Razorpay · 100% safe payments</Text>
+          <Text style={styles.secureText}>{t('securedRazorpay')}</Text>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <AnimatedButton label={`Pay ${formatINR(booking.totalAmount)}`} onPress={pay} />
+        <AnimatedButton
+          label={t('payAmount', { amount: formatINR(booking.totalAmount) })}
+          onPress={pay}
+        />
       </View>
-      <LoadingOverlay visible={loading} message="Processing payment..." />
+      <LoadingOverlay visible={loading} message={t('processingPayment')} />
     </SafeAreaView>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from '@/components/ui/Motion';
+import { CheckCircle2 } from 'lucide-react-native';
 import {
   useNavigation,
   useRoute,
@@ -9,12 +10,18 @@ import {
   CommonActions,
 } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import SuccessBlast from '@/components/ui/SuccessBlast';
+import { ShaderAnimation } from '@/components/ui/ShaderAnimation';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useBookingStore } from '@/store/bookingStore';
 import { useLocationStore } from '@/store/locationStore';
+import { useBookingsRepo } from '@/store/bookingsRepo';
+import { TIME_SLOTS } from '@/constants/services';
+import { formatDate } from '@/utils/date';
+import { formatBookingId } from '@/utils/validators';
 import type { BookingStackParamList, RootStackParamList } from '@/navigation/types';
+
+const { width } = Dimensions.get('window');
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<BookingStackParamList, 'PaymentSuccess'>;
@@ -24,6 +31,7 @@ export default function PaymentSuccessScreen() {
   const { params } = useRoute<Rt>();
   const resetBooking = useBookingStore((s) => s.resetBooking);
   const resetLocation = useLocationStore((s) => s.reset);
+  const booking = useBookingsRepo((s) => s.getById(params.bookingId));
 
   const goHome = () => {
     resetBooking();
@@ -51,55 +59,125 @@ export default function PaymentSuccessScreen() {
   };
 
   useEffect(() => {
-    const t = setTimeout(goHome, 6000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(goHome, 8000);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.center}>
-        <SuccessBlast />
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', delay: 500 }}
-          style={styles.textBlock}
-        >
-          <Text style={styles.title}>Payment Successful!</Text>
-          <Text style={styles.sub}>Your booking has been confirmed.</Text>
-          <View style={styles.idChip}>
-            <Text style={styles.idLabel}>Booking ID</Text>
-            <Text style={styles.idValue}>{params.bookingId}</Text>
-          </View>
-        </MotiView>
-      </View>
+  const slotLabel =
+    TIME_SLOTS.find((s) => s.value === booking?.preferredSlot)?.label ?? '';
 
-      <View style={styles.footer}>
-        <AnimatedButton label="View Booking" onPress={viewBooking} />
-        <AnimatedButton label="Go Home" variant="outline" shimmer={false} onPress={goHome} />
-      </View>
-    </SafeAreaView>
+  return (
+    <View style={styles.container}>
+      <ShaderAnimation />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <MotiView
+          from={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', delay: 200 }}
+          style={styles.successCard}
+        >
+          <MotiView
+            from={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', delay: 400 }}
+          >
+            <CheckCircle2 size={80} color={Colors.success} />
+          </MotiView>
+
+          <Text style={styles.successTitle}>Booking Confirmed!</Text>
+          <Text style={styles.successId}>{formatBookingId(params.bookingId)}</Text>
+
+          {booking ? (
+            <View style={styles.successDetail}>
+              <Text style={styles.detailLine}>{booking.serviceName}</Text>
+              <Text style={styles.detailLine}>
+                {booking.village}, {booking.district}
+              </Text>
+              <Text style={styles.detailLine}>
+                {formatDate(booking.preferredDate)} · {slotLabel}
+              </Text>
+              <Text style={styles.detailAmount}>
+                ₹{booking.totalAmount.toLocaleString('en-IN')} Paid
+              </Text>
+            </View>
+          ) : null}
+
+          <AnimatedButton label="View Booking" onPress={viewBooking} style={styles.btn} />
+          <AnimatedButton
+            label="Back to Home"
+            variant="outline"
+            onDark
+            shimmer={false}
+            onPress={goHome}
+            style={styles.btn}
+          />
+        </MotiView>
+
+        {/* Confetti-like particles */}
+        {Array.from({ length: 12 }).map((_, i) => (
+          <MotiView
+            key={i}
+            from={{ opacity: 1, translateY: -20, translateX: (i - 6) * 24 }}
+            animate={{ opacity: 0, translateY: 400 }}
+            transition={{ loop: true, duration: 2000 + i * 100, delay: i * 80 }}
+            style={[
+              styles.confetti,
+              {
+                left: width / 2 + (i - 6) * 20,
+                backgroundColor: i % 3 === 0 ? Colors.primary : i % 3 === 1 ? Colors.accent : Colors.white,
+              },
+            ]}
+          />
+        ))}
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing['2xl'] },
-  textBlock: { alignItems: 'center', gap: Spacing.sm },
-  title: { fontFamily: Typography.fontDisplay, fontSize: Typography.sizes['2xl'], color: Colors.textPrimary },
-  sub: { fontFamily: Typography.fontBody, fontSize: Typography.sizes.base, color: Colors.textSecondary },
-  idChip: {
-    flexDirection: 'row',
+  container: { flex: 1, backgroundColor: Colors.skyTop },
+  safe: { flex: 1, justifyContent: 'center', padding: Spacing.lg },
+  successCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: Radius['2xl'],
+    padding: Spacing.xl,
     alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.surfaceAlt,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.full,
-    marginTop: Spacing.md,
+    gap: Spacing.md,
   },
-  idLabel: { fontFamily: Typography.fontBody, fontSize: Typography.sizes.sm, color: Colors.textMuted },
-  idValue: { fontFamily: Typography.fontDisplaySemi, fontSize: Typography.sizes.base, color: Colors.primary },
-  footer: { padding: Spacing.lg, gap: Spacing.md },
+  successTitle: {
+    fontFamily: Typography.heading,
+    fontSize: Typography.sizes['2xl'],
+    color: Colors.textPrimary,
+    marginTop: Spacing.sm,
+  },
+  successId: {
+    fontFamily: Typography.mono,
+    fontSize: Typography.sizes.base,
+    color: Colors.primary,
+  },
+  successDetail: {
+    alignItems: 'center',
+    gap: 4,
+    marginVertical: Spacing.sm,
+  },
+  detailLine: {
+    fontFamily: Typography.body,
+    fontSize: Typography.sizes.sm,
+    color: Colors.textSecondary,
+  },
+  detailAmount: {
+    fontFamily: Typography.mono,
+    fontSize: Typography.sizes.lg,
+    color: Colors.primary,
+    marginTop: Spacing.sm,
+  },
+  btn: { width: '100%', marginTop: Spacing.sm },
+  confetti: {
+    position: 'absolute',
+    top: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+  },
 });

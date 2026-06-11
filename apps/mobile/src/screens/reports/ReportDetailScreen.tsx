@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,8 +9,10 @@ import Header from '@/components/common/Header';
 import FadeUp from '@/components/ui/FadeUp';
 import AnimatedButton from '@/components/ui/AnimatedButton';
 import ServiceIcon from '@/components/ui/ServiceIcon';
-import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
-import { getCropVisual, getReportDetail, type SoilMetric } from '@/constants/reports';
+import { Colors, Radius, Shadow, Spacing, Typography, resolveShadow } from '@/constants/theme';
+import { getCropVisual } from '@/constants/reports';
+import { getLocalizedReportDetail, tRecType, tSoilLevel } from '@/i18n/reportContent';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useBookingsRepo } from '@/store/bookingsRepo';
 import { formatDate } from '@/utils/date';
 import type { RootStackParamList } from '@/navigation/types';
@@ -18,27 +20,31 @@ import type { RootStackParamList } from '@/navigation/types';
 type Nav = NativeStackNavigationProp<RootStackParamList, 'ReportDetail'>;
 type Rt = RouteProp<RootStackParamList, 'ReportDetail'>;
 
-const LEVEL_COLOR: Record<SoilMetric['level'], string> = {
+const LEVEL_COLOR = {
   low: Colors.warning,
   optimal: Colors.success,
   high: Colors.info,
-};
+} as const;
 
 export default function ReportDetailScreen() {
+  const { t, tService, tCrop } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Rt>();
   const booking = useBookingsRepo((s) => s.getById(params.bookingId));
 
-  if (!booking) return null;
+  const detail = useMemo(
+    () => (booking ? getLocalizedReportDetail(t, booking.bookingId) : null),
+    [booking, t]
+  );
 
-  const detail = getReportDetail(booking.bookingId);
+  if (!booking || !detail) return null;
+
   const visual = getCropVisual(booking.cropType);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header title="Crop Report" onBack={() => navigation.goBack()} />
+      <Header title={t('cropReport')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero visual */}
         <FadeUp>
           <LinearGradient
             colors={visual.colors}
@@ -47,7 +53,9 @@ export default function ReportDetailScreen() {
             style={styles.hero}
           >
             <ServiceIcon name={visual.icon} size={52} color="rgba(255,255,255,0.95)" />
-            <Text style={styles.heroService}>{booking.serviceName}</Text>
+            <Text style={styles.heroService}>
+              {tService(booking.serviceId, booking.serviceName)}
+            </Text>
             <View style={styles.heroMetaRow}>
               <MapPin size={13} color="rgba(255,255,255,0.9)" />
               <Text style={styles.heroMeta}>
@@ -55,35 +63,33 @@ export default function ReportDetailScreen() {
               </Text>
             </View>
             <View style={styles.heroChips}>
-              <HeroChip label={`${booking.areaInAcres} acres`} />
-              <HeroChip label={booking.cropType} />
+              <HeroChip label={`${booking.areaInAcres} ${t('acres')}`} />
+              <HeroChip label={tCrop(booking.cropType)} />
               <HeroChip label={booking.bookingId} />
             </View>
           </LinearGradient>
         </FadeUp>
 
-        {/* Health + coverage */}
         <View style={styles.twinRow}>
           <FadeUp delay={100} style={styles.twinItem}>
-            <View style={[styles.metricCard, Shadow.card]}>
+            <View style={[styles.metricCard, resolveShadow(Shadow.card)]}>
               <Sprout size={18} color={Colors.success} />
               <Text style={styles.metricValue}>{detail.healthScore}/100</Text>
-              <Text style={styles.metricLabel}>Crop Health Index</Text>
+              <Text style={styles.metricLabel}>{t('cropHealthIndex')}</Text>
             </View>
           </FadeUp>
           <FadeUp delay={180} style={styles.twinItem}>
-            <View style={[styles.metricCard, Shadow.card]}>
+            <View style={[styles.metricCard, resolveShadow(Shadow.card)]}>
               <ScanLine size={18} color={Colors.primary} />
               <Text style={styles.metricValue}>{Math.round(detail.sprayCoverage * 100)}%</Text>
-              <Text style={styles.metricLabel}>Area Covered</Text>
+              <Text style={styles.metricLabel}>{t('areaCovered')}</Text>
             </View>
           </FadeUp>
         </View>
 
-        {/* Spray-area visual */}
         <FadeUp delay={220}>
-          <Text style={styles.sectionTitle}>Spray Coverage Map</Text>
-          <View style={[styles.coverageCard, Shadow.card]}>
+          <Text style={styles.sectionTitle}>{t('sprayCoverageMap')}</Text>
+          <View style={[styles.coverageCard, resolveShadow(Shadow.card)]}>
             <View style={styles.fieldGrid}>
               {Array.from({ length: 24 }).map((_, i) => {
                 const covered = i / 24 < detail.sprayCoverage;
@@ -101,20 +107,19 @@ export default function ReportDetailScreen() {
             <View style={styles.legendRow}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: visual.colors[0] }]} />
-                <Text style={styles.legendText}>Sprayed</Text>
+                <Text style={styles.legendText}>{t('sprayed')}</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: Colors.surfaceAlt }]} />
-                <Text style={styles.legendText}>Skipped / buffer</Text>
+                <Text style={styles.legendText}>{t('skippedBuffer')}</Text>
               </View>
             </View>
           </View>
         </FadeUp>
 
-        {/* Soil analysis */}
         <FadeUp delay={260}>
-          <Text style={styles.sectionTitle}>Soil Analysis</Text>
-          <View style={[styles.soilCard, Shadow.card]}>
+          <Text style={styles.sectionTitle}>{t('soilAnalysis')}</Text>
+          <View style={[styles.soilCard, resolveShadow(Shadow.card)]}>
             <View style={styles.soilNatureRow}>
               <Layers size={16} color={Colors.textSecondary} />
               <Text style={styles.soilNature}>{detail.soilNature}</Text>
@@ -128,7 +133,7 @@ export default function ReportDetailScreen() {
                     style={[styles.soilLevel, { backgroundColor: `${LEVEL_COLOR[m.level]}1A` }]}
                   >
                     <Text style={[styles.soilLevelText, { color: LEVEL_COLOR[m.level] }]}>
-                      {m.level.toUpperCase()}
+                      {tSoilLevel(t, m.level)}
                     </Text>
                   </View>
                 </View>
@@ -137,12 +142,11 @@ export default function ReportDetailScreen() {
           </View>
         </FadeUp>
 
-        {/* Recommendations */}
         <FadeUp delay={300}>
-          <Text style={styles.sectionTitle}>Recommendations</Text>
+          <Text style={styles.sectionTitle}>{t('recommendations')}</Text>
           <View style={styles.recsWrap}>
             {detail.recommendations.map((r) => (
-              <View key={r.name} style={[styles.recCard, Shadow.card]}>
+              <View key={r.name} style={[styles.recCard, resolveShadow(Shadow.card)]}>
                 <View style={styles.recTop}>
                   <View
                     style={[
@@ -159,7 +163,7 @@ export default function ReportDetailScreen() {
                         { color: r.type === 'Fertilizer' ? Colors.success : Colors.accent },
                       ]}
                     >
-                      {r.type.toUpperCase()}
+                      {tRecType(t, r.type)}
                     </Text>
                   </View>
                   <Text style={styles.recDosage}>{r.dosage}</Text>
@@ -171,10 +175,9 @@ export default function ReportDetailScreen() {
           </View>
         </FadeUp>
 
-        {/* Observations */}
         <FadeUp delay={340}>
-          <Text style={styles.sectionTitle}>Field Observations</Text>
-          <View style={[styles.obsCard, Shadow.card]}>
+          <Text style={styles.sectionTitle}>{t('fieldObservations')}</Text>
+          <View style={[styles.obsCard, resolveShadow(Shadow.card)]}>
             {detail.observations.map((o, i) => (
               <View key={i} style={styles.obsRow}>
                 <View style={styles.obsDot} />
@@ -186,11 +189,9 @@ export default function ReportDetailScreen() {
 
         <FadeUp delay={380}>
           <AnimatedButton
-            label="Download PDF Report"
+            label={t('downloadPdfReport')}
             icon={<Download size={18} color={Colors.white} />}
-            onPress={() =>
-              Alert.alert('Download', 'PDF download will be available once the backend is live.')
-            }
+            onPress={() => Alert.alert(t('downloadPdfReport'), t('downloadPdfMsg'))}
           />
         </FadeUp>
       </ScrollView>

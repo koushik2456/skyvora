@@ -10,7 +10,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography, resolveShadow } from '@/constants/theme';
 
 interface Option<T> {
   label: string;
@@ -82,14 +82,25 @@ const styles = StyleSheet.create({
     left: 4,
     backgroundColor: Colors.surface,
     borderRadius: Radius.sm,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    ...resolveShadow({
+      shadowColor: Colors.black,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+      elevation: 2,
+    }),
   },
   trackDark: { backgroundColor: Colors.dark.glass, borderWidth: 1, borderColor: Colors.dark.border },
-  indicatorDark: { backgroundColor: Colors.primary, shadowColor: Colors.primary, shadowOpacity: 0.5 },
+  indicatorDark: {
+    backgroundColor: Colors.primary,
+    ...resolveShadow({
+      shadowColor: Colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.5,
+      shadowRadius: 8,
+      elevation: 4,
+    }),
+  },
   segment: { flex: 1, paddingVertical: Spacing.sm + 2, alignItems: 'center', zIndex: 1 },
   label: {
     fontFamily: Typography.fontBodyMedium,

@@ -6,6 +6,7 @@ import AnimatedCard from './AnimatedCard';
 import ServiceIcon from './ServiceIcon';
 import PriceTag from './PriceTag';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Service } from '@/types';
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export default function ServiceCard({ service, onPress, selected, compact }: Props) {
+  const { t, tService, tServiceDesc } = useTranslation();
+
   return (
     <AnimatedCard
       onPress={onPress}
@@ -40,15 +43,15 @@ export default function ServiceCard({ service, onPress, selected, compact }: Pro
         ) : null}
       </View>
       <Text style={styles.name} numberOfLines={2}>
-        {service.name}
+        {tService(service.id, service.name)}
       </Text>
       {!compact ? (
         <Text style={styles.desc} numberOfLines={2}>
-          {service.description}
+          {tServiceDesc(service.id, service.description)}
         </Text>
       ) : null}
       <View style={styles.priceRow}>
-        <PriceTag amount={service.ratePerAcre} suffix="/acre" size="md" />
+        <PriceTag amount={service.ratePerAcre} suffix={t('perAcre')} size="md" />
       </View>
     </AnimatedCard>
   );

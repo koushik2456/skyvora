@@ -15,3 +15,7 @@ export const generateBookingId = (): string => {
   }
   return `SKY-${id}`;
 };
+
+/** Display booking id without duplicating the SKY- prefix. */
+export const formatBookingId = (bookingId: string): string =>
+  bookingId.startsWith('SKY-') ? bookingId : `SKY-${bookingId}`;

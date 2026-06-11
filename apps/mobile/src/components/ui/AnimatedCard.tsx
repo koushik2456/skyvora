@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Colors, Motion, Radius, Shadow, Spacing } from '@/constants/theme';
+import { Colors, Motion, Radius, Shadow, Spacing, resolveShadow } from '@/constants/theme';
 
 interface Props {
   children: React.ReactNode;
@@ -31,7 +31,7 @@ export default function AnimatedCard({ children, onPress, style, disabled, dark,
 
   return (
     <Animated.View
-      style={[styles.card, dark ? styles.cardDark : Shadow.card, animatedStyle, style]}
+      style={[styles.card, dark ? styles.cardDark : resolveShadow(Shadow.card), animatedStyle, style]}
     >
       <Pressable
         disabled={disabled || !onPress}

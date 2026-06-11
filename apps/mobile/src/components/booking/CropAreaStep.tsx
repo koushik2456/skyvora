@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { MotiView } from '@/components/ui/Motion';
 import ChipSelector from '@/components/ui/ChipSelector';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { CROP_TYPES, AREA_UNITS } from '@/constants/services';
+import { CROP_TYPE_LABELS, AREA_UNITS } from '@/constants/services';
+import { useTranslation } from '@/hooks/useTranslation';
 import { toAcres, isAreaValid, MIN_ACRES, MAX_ACRES } from '@/utils/areaConverter';
 import type { AreaUnit } from '@/types';
 
@@ -25,42 +26,54 @@ export default function CropAreaStep({
   onAreaValue,
   onAreaUnit,
 }: Props) {
+  const { t, tCrop, tAreaUnit } = useTranslation();
   const [otherCrop, setOtherCrop] = useState('');
   const numeric = parseFloat(areaValue) || 0;
   const acres = toAcres(numeric, areaUnit);
   const valid = numeric > 0 && isAreaValid(acres);
+  const acresLabel = t('acres');
+
+  const cropOptions = useMemo(
+    () => CROP_TYPE_LABELS.map((c) => ({ value: c, label: tCrop(c) })),
+    [tCrop]
+  );
+
+  const unitOptions = useMemo(
+    () => AREA_UNITS.map((u) => ({ value: u.value, label: tAreaUnit(u.value) })),
+    [tAreaUnit]
+  );
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Crop & Area</Text>
+      <Text style={styles.title}>{t('cropAreaTitle')}</Text>
 
-      <Text style={styles.section}>Crop Type</Text>
-      <ChipSelector options={CROP_TYPES} value={cropType} onChange={onCrop} />
+      <Text style={styles.section}>{t('lblCropType')}</Text>
+      <ChipSelector options={cropOptions} value={cropType} onChange={onCrop} />
       {cropType === 'Other' ? (
         <TextInput
           value={otherCrop}
-          onChangeText={(t) => {
-            setOtherCrop(t);
-            onCrop(t.length ? t : 'Other');
+          onChangeText={(text) => {
+            setOtherCrop(text);
+            onCrop(text.length ? text : 'Other');
           }}
-          placeholder="Enter crop name"
+          placeholder={t('phEnterCropName')}
           placeholderTextColor={Colors.textMuted}
           style={styles.input}
         />
       ) : null}
 
-      <Text style={styles.section}>Area</Text>
+      <Text style={styles.section}>{t('lblArea')}</Text>
       <TextInput
         value={areaValue}
-        onChangeText={(t) => onAreaValue(t.replace(/[^0-9.]/g, ''))}
-        placeholder="Enter area"
+        onChangeText={(v) => onAreaValue(v.replace(/[^0-9.]/g, ''))}
+        placeholder={t('phEnterArea')}
         placeholderTextColor={Colors.textMuted}
         keyboardType="decimal-pad"
         style={[styles.input, numeric > 0 && (valid ? styles.inputValid : styles.inputError)]}
       />
 
       <SegmentedControl
-        options={AREA_UNITS}
+        options={unitOptions}
         value={areaUnit}
         onChange={(v) => onAreaUnit(v as AreaUnit)}
       />
@@ -73,11 +86,21 @@ export default function CropAreaStep({
         >
           {valid ? (
             <Text style={styles.convText}>
-              {numeric} {areaUnit} = <Text style={styles.convAcres}>{acres} Acres</Text>
+              {t('areaEquals', {
+                value: numeric,
+                unit: tAreaUnit(areaUnit),
+                acres,
+                acresLabel,
+              })}
             </Text>
           ) : (
             <Text style={styles.convErrorText}>
-              Area must be between {MIN_ACRES} and {MAX_ACRES} acres ({acres} acres entered).
+              {t('areaInvalid', {
+                min: MIN_ACRES,
+                max: MAX_ACRES,
+                acresLabel,
+                entered: acres,
+              })}
             </Text>
           )}
         </MotiView>
@@ -87,7 +110,14 @@ export default function CropAreaStep({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.base },
+  wrap: {
+    gap: Spacing.base,
+    backgroundColor: Colors.sectionBg,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   title: { fontFamily: Typography.fontDisplay, fontSize: Typography.sizes.xl, color: Colors.textPrimary },
   section: { fontFamily: Typography.fontBodySemi, fontSize: Typography.sizes.sm, color: Colors.textSecondary, marginTop: Spacing.sm },
   input: {
@@ -112,6 +142,5 @@ const styles = StyleSheet.create({
   },
   convError: { backgroundColor: '#FDECEC' },
   convText: { fontFamily: Typography.fontBodyMedium, fontSize: Typography.sizes.base, color: Colors.textSecondary },
-  convAcres: { fontFamily: Typography.fontDisplaySemi, color: Colors.primary },
   convErrorText: { fontFamily: Typography.fontBodyMedium, fontSize: Typography.sizes.sm, color: Colors.danger, textAlign: 'center' },
 });

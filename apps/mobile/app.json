@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "skyvora",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "backgroundColor": "#1A6B3C",
       "resizeMode": "contain"
