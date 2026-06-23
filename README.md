@@ -75,9 +75,5 @@ firebase functions:secrets:set RAZORPAY_KEY_SECRET
 | GET | `/api/reports` | List completed reports |
 | GET | `/api/reports/:id` | Signed PDF download URL |
 
-## Notes / next steps
-
-- Wire Firebase Phone Auth in `OTPScreen` (currently mocked).
-- Integrate `react-native-razorpay` in `PaymentScreen` and call `/payments/verify`.
-- Expand `india_locations.json` (Telangana, AP, Maharashtra prioritized today).
-- Add FCM device-token registration + push handling.
+## Download the application
+https://drive.google.com/file/d/1nOWy5e9GzHaH24SjKmBNmiFYywj8DwYQ/view?usp=sharing
